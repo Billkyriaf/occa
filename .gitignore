@@ -51,3 +51,6 @@ editorTools/visualStudio/*
 !editorTools/visualStudio/occa.vcxproj
 !editorTools/visualStudio/occa.vcxproj.filters
 .vscode
+
+# Test Files
+test_xrt*
