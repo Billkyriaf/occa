@@ -32,7 +32,8 @@ option(OCCA_ENABLE_CUDA   "Build with CUDA if available"   ON)
 option(OCCA_ENABLE_OPENCL "Build with OpenCL if available" ON)
 option(OCCA_ENABLE_HIP    "Build with HIP if available" ON)
 option(OCCA_ENABLE_METAL  "Build with Metal if available" ON)
-option(OCCA_ENABLE_DPCPP "Build with SYCL/DPCPP if available" ON)
+option(OCCA_ENABLE_DPCPP  "Build with SYCL/DPCPP if available" ON)
+option(OCCA_ENABLE_XRT    "Build with AMD XRT if available" ON)
 
 option(OCCA_ENABLE_TESTS    "Build tests"               OFF)
 option(OCCA_ENABLE_EXAMPLES "Build simple examples"     OFF)
@@ -212,6 +213,23 @@ if(OCCA_ENABLE_HIP)
 endif()
 #=======================================
 
+#---[ XRT ]-----------------------------
+if(OCCA_ENABLE_XRT)
+  find_package(XRT)
+
+  if(XRT_FOUND)
+    set(OCCA_XRT_ENABLED 1)
+
+    message(STATUS "XRT include dirs: ${XRT_INCLUDE_DIRS}")
+    message(STATUS "XRT libraries:    ${XRT_LIBRARIES}")
+
+    target_link_libraries(libocca PRIVATE OCCA::depends::XRT)
+  else (XRT_FOUND)
+    set(OCCA_XRT_ENABLED 0)
+  endif(XRT_FOUND)
+endif()
+#=======================================
+
 #---[ Metal ]---------------------------
 if(OCCA_ENABLE_METAL AND APPLE)
   find_package(METAL)
@@ -240,6 +258,7 @@ if(NOT OCCA_IS_TOP_LEVEL)
   set(OCCA_DPCPP_ENABLED ${OCCA_DPCPP_ENABLED} PARENT_SCOPE)
   set(OCCA_OPENCL_ENABLED ${OCCA_OPENCL_ENABLED} PARENT_SCOPE)
   set(OCCA_METAL_ENABLED ${OCCA_METAL_ENABLED} PARENT_SCOPE)
+  set(OCCA_XRT_ENABLED ${OCCA_XRT_ENABLED} PARENT_SCOPE)
 endif()
 
 # Generate CompiledDefines from libraries we found
