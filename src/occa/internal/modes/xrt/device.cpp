@@ -17,23 +17,23 @@ namespace occa {
             deviceId = properties_.get<int>("device_id");
 
 #if OCCA_XRT_ENABLED
-        // Raise error if the device id is negative
-        OCCA_ERROR(
-            "XRT device_id must be non-negative",
-            deviceId >= 0
-        );
+            // Raise error if the device id is negative
+            OCCA_ERROR(
+                "XRT device_id must be non-negative",
+                deviceId >= 0
+            );
 
-        // Create the XRT device with the provided deviceId
-        xrtDevice = ::xrt::device(
-            static_cast<unsigned int>(deviceId)
-        );
+            // Create the XRT device with the provided deviceId
+            xrtDevice = ::xrt::device(
+                static_cast<unsigned int>(deviceId)
+            );
 
-        // Get the devie name
-        arch = xrtDevice.get_info<::xrt::info::device::name>();
+            // Get the devie name
+            arch = xrtDevice.get_info<::xrt::info::device::name>();
 #else
-        OCCA_FORCE_ERROR(
-            "OCCA was not built with XRT support"
-        );
+            OCCA_FORCE_ERROR(
+                "OCCA was not built with XRT support"
+            );
 #endif
         }
 

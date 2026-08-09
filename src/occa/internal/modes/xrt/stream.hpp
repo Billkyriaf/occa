@@ -7,10 +7,7 @@ namespace occa {
     namespace xrt {
         class stream : public occa::modeStream_t {
             public:
-            stream(
-                modeDevice_t *modeDevice_,
-                const occa::json &properties_
-            );
+            stream(modeDevice_t *modeDevice_, const occa::json &properties_);
 
             ~stream() override;
 
