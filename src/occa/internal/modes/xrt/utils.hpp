@@ -7,6 +7,18 @@ namespace occa {
   namespace xrt {
     int getDeviceCount();
   }
+
+  void error(const std::exception &e,
+               const char *filename,
+               const char *function,
+               const int line,
+               const std::string &message);
+
+  void warn(const std::exception &e,
+            const char *filename,
+            const char *function,
+            const int line,
+            const std::string &message);
 }
 
 #endif

@@ -82,6 +82,34 @@
 #define OCCA_HIP_WARNING(message, expr) OCCA_HIP_WARNING2(expr, __FILE__, __PRETTY_FUNCTION__, __LINE__, message)
 //======================================
 
+//---[ XRT ]---------------------------
+#define OCCA_XRT_TEMPLATE_CHECK(checkFunction, expr, filename, function, line, message) \
+  try {                                                                                 \
+    expr;                                                                                \
+  } catch (const std::exception &e) {                                                    \
+    std::stringstream _check_ss;                                                         \
+    _check_ss << message;                                                                \
+    checkFunction(e, filename, function, line, _check_ss.str());                         \
+  }
+
+#define OCCA_XRT_ERROR3(expr, filename, function, line, message) \
+  OCCA_XRT_TEMPLATE_CHECK(occa::xrt::error, expr, filename, function, line, message)
+
+#define OCCA_XRT_ERROR2(expr, filename, function, line, message) \
+  OCCA_XRT_ERROR3(expr, filename, function, line, message)
+
+#define OCCA_XRT_ERROR(message, expr) \
+  OCCA_XRT_ERROR2(expr, __FILE__, __PRETTY_FUNCTION__, __LINE__, message)
+
+#define OCCA_XRT_WARNING3(expr, filename, function, line, message) \
+  OCCA_XRT_TEMPLATE_CHECK(occa::xrt::warn, expr, filename, function, line, message)
+
+#define OCCA_XRT_WARNING2(expr, filename, function, line, message) \
+  OCCA_XRT_WARNING3(expr, filename, function, line, message)
+
+#define OCCA_XRT_WARNING(message, expr) \
+  OCCA_XRT_WARNING2(expr, __FILE__, __PRETTY_FUNCTION__, __LINE__, message)
+//======================================
 
 //---[ OpenCL ]-------------------------
 #define OCCA_OPENCL_TEMPLATE_CHECK(checkFunction, expr, filename, function, line, message) \
