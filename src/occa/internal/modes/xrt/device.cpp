@@ -1,8 +1,13 @@
 #include <sstream>
+#include <memory>
 
 #include <occa/core/base.hpp>
 #include <occa/internal/modes/xrt/device.hpp>
 #include <occa/internal/modes/xrt/stream.hpp>
+#include <occa/internal/modes/xrt/kernel.hpp>
+#include <occa/internal/modes/xrt/memory.hpp>
+#include <occa/internal/modes/xrt/buffer.hpp>
+
 
 namespace occa {
     namespace xrt {
@@ -78,7 +83,6 @@ namespace occa {
         }
 
         streamTag device::tagStream() {
-            // TODO implement
             OCCA_FORCE_ERROR(
                 "XRT stream tags are not implemented yet"
             );
@@ -87,7 +91,6 @@ namespace occa {
         }
 
         void device::waitFor(streamTag) {
-            // TODO implement
             OCCA_FORCE_ERROR(
                 "XRT stream tags are not implemented yet"
             );
@@ -112,20 +115,42 @@ namespace occa {
             return nullptr;
         }
 
-        modeKernel_t* device::buildKernelFromBinary(const std::string&, const std::string&, const occa::json&) {
-            OCCA_FORCE_ERROR(
-                "XRT binary kernels are not implemented yet"
-            );
+        modeKernel_t* device::buildKernelFromBinary(const std::string &filename, const std::string &kernelName, const occa::json&props) {
+            
+            // Load the xclbin file if no xclbin file is loaded
+            if (!loadedUuid.has_value()){
+                // The uui of the xclbin
+                loadedUuid = xrtDevice.load_xclbin(filename);
 
-            return nullptr;
+                // The name of the file (path)
+                loadedXclbin = filename;
+
+            } else if (loadedXclbin != filename) {
+                // If the path is set a file is already loaded.
+                OCCA_FORCE_ERROR("A different xclbin is already loaded on this XRT device");
+            }
+            
+            // Reference to the XRT kernel
+            auto xrtKernel = std::make_unique<::xrt::kernel>(xrtDevice, *loadedUuid, kernelName);
+
+            // create the OCCA kernel. This will own the XRT kernel
+            auto *occaKernel = new occa::xrt::kernel(std::move(xrtKernel), this, kernelName, filename, props);
+
+            return occaKernel;
         }
 
-        modeMemory_t* device::malloc(const udim_t, const void*, const occa::json&) {
-            OCCA_FORCE_ERROR(
-                "XRT memory allocation is not implemented yet"
-            );
+        modeMemory_t* device::malloc(const udim_t bytes, const void *src, const occa::json &props) {
+            auto *xrtBuffer = new occa::xrt::buffer(this, bytes, props);
 
-            return nullptr;
+            xrtBuffer->malloc(bytes);
+
+            modeMemory_t *memory = xrtBuffer->slice(0, bytes);
+
+            if (src != nullptr) {
+                memory->copyFrom(src, bytes);
+            }
+
+            return memory;
         }
 
         modeMemory_t* device::wrapMemory(const void*, const udim_t, const occa::json&) {
