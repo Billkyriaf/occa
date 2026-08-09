@@ -1,6 +1,8 @@
 #ifndef OCCA_INTERNAL_MODES_XRT_DEVICE_HEADER
 #define OCCA_INTERNAL_MODES_XRT_DEVICE_HEADER
 
+#include <optional>
+
 #include <occa/internal/core/device.hpp>
 #include <occa/internal/modes/xrt/polyfill.hpp>
 
@@ -9,6 +11,8 @@ namespace occa {
     class device : public occa::modeDevice_t {
     private:
       mutable hash_t hash_;
+      std::optional<::xrt::uuid> loadedUuid;
+      std::string loadedXclbin;
 
     public:
       int deviceId;

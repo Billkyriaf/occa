@@ -6,8 +6,10 @@
 
 namespace occa {
     namespace xrt {
-        device::device(const occa::json &properties_) : occa::modeDevice_t(properties_), 
-                                                        deviceId(properties_.get("device_id", 0)) {
+        device::device(const occa::json &properties_) : occa::modeDevice_t(properties_) {
+            OCCA_ERROR("XRT device requires a device_id property", properties_.has("device_id"));
+            
+            deviceId = properties_.get<int>("device_id");
 
 #if OCCA_XRT_ENABLED
         // Raise error if the device id is negative
@@ -30,7 +32,9 @@ namespace occa {
 #endif
         }
 
-        device::~device() {}
+        device::~device() {
+            freeResources();
+        }
 
         bool device::hasSeparateMemorySpace() const {
             // The FPGA has separate memory space so data transfers should be executed
@@ -51,17 +55,21 @@ namespace occa {
             return hash_;
         }
 
-        hash_t device::kernelHash(const occa::json&) const {
-            // TODO implement
-            return occa::hash("xrt-binary");
+        hash_t device::kernelHash(const occa::json &props) const {            
+            // The kernelHash function belongs to the buildKernel flow. 
+            // Since XRT only uses the buildKernelFromBinary this function is implementd only because the parent
+            // class requires it. 
+            // There is no real value in this hash.
+            return occa::hash(props);
         }
 
         modeStream_t* device::createStream(const occa::json &props) {
-            // Streams are not natively supported in XRT. 
+            // The first version of the backend will only support synchronus kernel execution
             return new occa::xrt::stream(this, props);
         }
 
         modeStream_t* device::wrapStream( void*, const occa::json&) {
+            // Since XRT does not support streams natively there is nothing to adopt here
             OCCA_FORCE_ERROR(
                 "XRT does not currently support wrapping native streams"
             );
@@ -94,6 +102,8 @@ namespace occa {
         }
 
         modeKernel_t* device::buildKernel(const std::string&, const std::string&, const hash_t, const occa::json&) {
+            // Building kernels from source will not be supported because it takes 3 hours for 
+            // place and route for each one
             OCCA_FORCE_ERROR(
                 "XRT source compilation is not supported; "
                 "use buildKernelFromBinary() with an .xclbin"
