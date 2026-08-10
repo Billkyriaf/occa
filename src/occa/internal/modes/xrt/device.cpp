@@ -116,7 +116,7 @@ namespace occa {
         }
 
         modeKernel_t* device::buildKernelFromBinary(const std::string &filename, const std::string &kernelName, const occa::json&props) {
-            
+#if OCCA_XRT_ENABLED
             // Load the xclbin file if no xclbin file is loaded
             if (!loadedUuid.has_value()){
                 // The uui of the xclbin
@@ -137,6 +137,13 @@ namespace occa {
             auto *occaKernel = new occa::xrt::kernel(std::move(xrtKernel), this, kernelName, filename, props);
 
             return occaKernel;
+#else
+            OCCA_FORCE_ERROR(
+                "OCCA was not built with XRT support"
+            );
+
+            return nullptr;
+#endif
         }
 
         modeMemory_t* device::malloc(const udim_t bytes, const void *src, const occa::json &props) {
@@ -177,8 +184,12 @@ namespace occa {
 #if OCCA_XRT_ENABLED
             return &xrtDevice;
 #else
+            OCCA_FORCE_ERROR(
+                "OCCA was not built with XRT support"
+            );
+            
             return nullptr;
 #endif
         }
-  }
+    }
 }

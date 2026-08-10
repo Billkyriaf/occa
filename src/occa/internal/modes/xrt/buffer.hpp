@@ -26,8 +26,9 @@ namespace occa {
             void detach() override;
 
         private:
+#if OCCA_XRT_ENABLED
             std::unique_ptr<::xrt::bo> xrtBo;
-
+#endif
             int groupId;
         };
     }

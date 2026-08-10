@@ -8,8 +8,10 @@
 namespace occa {
     namespace xrt {
         buffer::buffer(modeDevice_t *modeDevice_, udim_t size_, const occa::json &properties_) :
-            occa::modeBuffer_t(modeDevice_, size_, properties_),
-            xrtBo(nullptr) {
+            occa::modeBuffer_t(modeDevice_, size_, properties_) {
+#if OCCA_XRT_ENABLED
+                xrtBo = nullptr;
+#endif
                 OCCA_ERROR("XRT memory allocation requires a group_id property", properties_.has("group_id"));
 
                 groupId = properties_.get<int>("group_id");
@@ -18,6 +20,7 @@ namespace occa {
         buffer::~buffer() = default;
 
         void buffer::malloc(udim_t bytes) {
+#if OCCA_XRT_ENABLED
             OCCA_ERROR("Cannot allocate an XRT buffer with a negative group_id", groupId >= 0);
 
             if (!bytes) {
@@ -42,6 +45,11 @@ namespace occa {
             }
 
             size = bytes;
+#else
+            OCCA_FORCE_ERROR(
+                "OCCA was not built with XRT support"
+            );
+#endif
         }
 
         modeMemory_t *buffer::slice(const dim_t offset, const udim_t bytes) {

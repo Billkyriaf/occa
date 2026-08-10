@@ -11,11 +11,19 @@ namespace occa {
         memory::~memory() = default;
 
         void *memory::getKernelArgPtr() const {
+#if OCCA_XRT_ENABLED
             auto *xrtBuffer = static_cast<occa::xrt::buffer*>(modeBuffer);
 
             OCCA_ERROR("XRT buffer has no allocated BO", xrtBuffer->xrtBo != nullptr);
 
             return xrtBuffer->xrtBo.get();
+#else
+            OCCA_FORCE_ERROR(
+                "XRT is disabled in the OCCCA build"
+            );
+
+            return nullptr;
+#endif
         }
 
         void memory::copyTo(
@@ -24,6 +32,8 @@ namespace occa {
             const udim_t offset, 
             const occa::json &props
         ) const {
+
+#if OCCA_XRT_ENABLED
             OCCA_ERROR(
                 "XRT memory copy exceeds the memory view",
                 offset <= size && bytes <= (size - offset)
@@ -44,6 +54,11 @@ namespace occa {
 
             xrtBo->sync(XCL_BO_SYNC_BO_FROM_DEVICE, bytes, absoluteOffset);
             xrtBo->read(dest, bytes, absoluteOffset);
+#else
+            OCCA_FORCE_ERROR(
+                "XRT is disabled in the OCCCA build"
+            );
+#endif
         }
 
         void memory::copyFrom(
@@ -52,6 +67,8 @@ namespace occa {
             const udim_t offset,
             const occa::json &props
         ){
+
+#if OCCA_XRT_ENABLED
             OCCA_ERROR(
                 "XRT memory copy exceeds the memory view",
                 offset <= size && bytes <= (size - offset)
@@ -73,6 +90,11 @@ namespace occa {
             xrtBo->write(src, bytes, absoluteOffset);
 
             xrtBo->sync(XCL_BO_SYNC_BO_TO_DEVICE, bytes, absoluteOffset);
+#else
+            OCCA_FORCE_ERROR(
+                "XRT is disabled in the OCCCA build"
+            );
+#endif
         }
 
         void memory::copyFrom(
@@ -86,11 +108,19 @@ namespace occa {
         }
 
         void *memory::unwrap() {
+#if OCCA_XRT_ENABLED
             auto *xrtBuffer = static_cast<occa::xrt::buffer*>(modeBuffer);
 
             OCCA_ERROR("XRT buffer has no allocated BO", xrtBuffer->xrtBo != nullptr);
 
             return xrtBuffer->xrtBo.get();
+#else
+            OCCA_FORCE_ERROR(
+                "XRT is disabled in the OCCCA build"
+            );
+
+            return nullptr;
+#endif
         }
     }
 }

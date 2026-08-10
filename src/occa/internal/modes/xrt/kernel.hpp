@@ -17,6 +17,7 @@ namespace occa {
                 const occa::json &properties_
             );
 
+#if OCCA_XRT_ENABLED
             kernel(
                 std::unique_ptr<::xrt::kernel> xrtKernel_,
                 modeDevice_t *modeDevice_,
@@ -24,7 +25,8 @@ namespace occa {
                 const std::string &binaryFilename_,
                 const occa::json &properties_
             );
-            
+#endif
+
             ~kernel() override;
 
             int maxDims() const override;
@@ -40,7 +42,7 @@ namespace occa {
 
         private:
 
- #if OCCA_XRT_ENABLED
+#if OCCA_XRT_ENABLED
             std::unique_ptr<::xrt::kernel> xrtKernel;
 #endif 
            

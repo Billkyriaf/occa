@@ -15,6 +15,7 @@ namespace occa{
             this->binaryFilename = binaryFilename_;
         }
 
+#if OCCA_XRT_ENABLED
         kernel::kernel(
             std::unique_ptr<::xrt::kernel> xrtKernel_, 
             modeDevice_t *modeDevice_, 
@@ -25,6 +26,7 @@ namespace occa{
             
             this->binaryFilename = binaryFilename_;
         }
+#endif
 
         kernel::~kernel() = default;
 
@@ -49,6 +51,7 @@ namespace occa{
         }
 
         void kernel::run() const {
+#if OCCA_XRT_ENABLED
             ::xrt::run xrtRun(*xrtKernel);
 
             for (int i = 0; i < arguments.size(); ++i) {
@@ -72,11 +75,20 @@ namespace occa{
 
             xrtRun.start();
             xrtRun.wait();
+#else
+            OCCA_FORCE_ERROR(
+                "XRT is disabled in the OCCCA build"
+            );
+#endif
         }
 
         void *kernel::unwrap(){
             // return a pointer to a native xrtKernel
+#if OCCA_XRT_ENABLED
             return xrtKernel.get();
+#else
+            return nullptr;
+#endif
         }
     }
 }
