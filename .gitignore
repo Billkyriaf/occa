@@ -55,3 +55,6 @@ editorTools/visualStudio/*
 
 # Test Files
 test_xrt*
+
+# Logs
+*log
