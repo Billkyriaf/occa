@@ -8,16 +8,38 @@
 
 namespace occa {
     namespace xrt {
+		typedef struct argumentMem {
+			bool memUsed;          // true if the memory resource is used
+			int  memIndex;         // memory index
+			::std::string memTag;  // memory tag (bank)
+		} argumentMem;
+		
+		typedef struct kernelArg{
+			int  index;         // argument index
+			int  groupId;       // groud_id used for xrt::bo allocation
+			int  size;          // argument size
+			::std::string port; // memory port that the argument connects
+
+			bool isMemory;      // true if the argument is a pointer to memory
+			::std::vector<argumentMem> mems; // memory interfaces for the argument
+		} kernelArg;
+
+		typedef struct xrtKernelInfo {
+			::std::vector<kernelArg> args;
+		} xrtKernelInfo;
+
         class device : public occa::modeDevice_t {
         private:
 #if OCCA_XRT_ENABLED
             std::optional<::xrt::uuid> loadedUuid;
 #endif
+			
       		mutable hash_t hash_;
 			std::string loadedXclbin;
 
 		public:
 			int deviceId;
+			::std::unordered_map<::std::string, xrtKernelInfo> kernels;
 
 #if OCCA_XRT_ENABLED
       		::xrt::device xrtDevice;
@@ -91,5 +113,5 @@ namespace occa {
 			void* unwrap() override;
     	};
   	}
-}
+} 
 #endif
