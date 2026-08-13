@@ -2,6 +2,7 @@
 #define OCCA_INTERNAL_MODES_XRT_DEVICE_HEADER
 
 #include <optional>
+#include <unordered_map>
 
 #include <occa/internal/core/device.hpp>
 #include <occa/internal/modes/xrt/polyfill.hpp>
