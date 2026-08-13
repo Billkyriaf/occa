@@ -12,9 +12,26 @@ namespace occa {
 #if OCCA_XRT_ENABLED
                 xrtBo = nullptr;
 #endif
-                OCCA_ERROR("XRT memory allocation requires a group_id property", properties_.has("group_id"));
+                auto *xrtDevice = (occa::xrt::device*) modeDevice_;
 
-                groupId = properties_.get<int>("group_id");
+                xrtKernelInfo kernel =
+                    xrtDevice->kernels[properties_.get<::std::string>("kernel")];
+
+                groupId = -1;
+
+                for (auto const &arg : kernel.args){
+                    ::std::cout << "Argument index: " << arg.index << " props.index: " << properties_.get<int>("arg_index") << ::std::endl;
+                    
+                    if (arg.index == properties_.get<int>("arg_index")) {
+                        groupId = arg.groupId;
+                        ::std::cout << "GroupId is now: " << groupId << ::std::endl;
+                    }
+                }
+                
+                ::std::cout << "GroupId ended being: " << groupId << ::std::endl;
+                
+                // if groupId is still -1 somthing went wrong
+                OCCA_ERROR("The argument index is wrong OR the argument is a scalar. Can not create xrt buffer", groupId != -1);
             }
 
         buffer::~buffer() = default;
