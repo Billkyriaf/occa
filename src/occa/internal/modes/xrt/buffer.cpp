@@ -11,24 +11,35 @@ namespace occa {
             occa::modeBuffer_t(modeDevice_, size_, properties_) {
 #if OCCA_XRT_ENABLED
                 xrtBo = nullptr;
-#endif
+#endif          
+                groupId = 0;
+                
                 auto *xrtDevice = (occa::xrt::device*) modeDevice_;
 
-                xrtKernelInfo kernel =
-                    xrtDevice->kernels[properties_.get<::std::string>("kernel")];
+                if (xrtDevice->kernels.size() == 0){
+                    OCCA_FORCE_ERROR("No kernels are loaded yet. Make sure you load the kernel before memory allocation");
+                }
+                
+                auto kernelName = properties_.get<std::string>("kernel");
 
-                groupId = -1;
+                auto it = xrtDevice->kernels.find(kernelName);
+
+                if (it == xrtDevice->kernels.end()) {
+                    OCCA_FORCE_ERROR("The requested kernel does not exist!");
+                }
+
+                xrtKernelInfo kernel = it->second;
 
                 for (auto const &arg : kernel.args){
-                    ::std::cout << "Argument index: " << arg.index << " props.index: " << properties_.get<int>("arg_index") << ::std::endl;
+                    // ::std::cout << "Argument index: " << arg.index << " props.index: " << properties_.get<int>("arg_index") << ::std::endl;
                     
                     if (arg.index == properties_.get<int>("arg_index")) {
                         groupId = arg.groupId;
-                        ::std::cout << "GroupId is now: " << groupId << ::std::endl;
+                        // ::std::cout << "GroupId is now: " << groupId << ::std::endl;
                     }
                 }
                 
-                ::std::cout << "GroupId ended being: " << groupId << ::std::endl;
+                // ::std::cout << "GroupId ended being: " << groupId << ::std::endl;
                 
                 // if groupId is still -1 somthing went wrong
                 OCCA_ERROR("The argument index is wrong OR the argument is a scalar. Can not create xrt buffer", groupId != -1);
