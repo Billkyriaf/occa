@@ -40,7 +40,7 @@ jobs:
 
           gcc --version
           g++ --version
-          cmake --version
+          /usr/bin/cmake --version
           v++ --version
 
           test -d "$XILINX_XRT/include"
@@ -58,7 +58,7 @@ jobs:
 
           mkdir -p "$BUILD_DIR"
 
-          cmake -S "$GITHUB_WORKSPACE" \
+          /usr/bin/cmake -S "$GITHUB_WORKSPACE" \
                 -B "$BUILD_DIR/build" \
                 -G "Unix Makefiles" \
                 -DCMAKE_BUILD_TYPE=Release \
@@ -100,7 +100,7 @@ jobs:
 
           BUILD_DIR="$BUILD_ROOT/$GITHUB_REF_NAME"
 
-          cmake --build "$BUILD_DIR/build" --parallel 8
+          /usr/bin/cmake --build "$BUILD_DIR/build" --parallel 8
 
       - name: Install OCCA
         run: |
@@ -112,7 +112,7 @@ jobs:
 
           BUILD_DIR="$BUILD_ROOT/$GITHUB_REF_NAME"
 
-          cmake --install "$BUILD_DIR/build"
+          /usr/bin/cmake --install "$BUILD_DIR/build"
 
       - name: Save build metadata
         run: |
