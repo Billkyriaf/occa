@@ -19,9 +19,8 @@
 #    include <errno.h>
 #    include <sys/sysinfo.h>
 #  else // OCCA_MACOS_OS
-#    include <AvailabilityMacros.h>
 #    include <mach/mach_host.h>
-#    if MAC_OS_X_VERSION_MIN_REQUIRED >= 101200
+#    ifdef __clang__
 #      include <CoreServices/CoreServices.h>
 #      include <mach/mach_time.h>
 #    else
@@ -83,7 +82,7 @@ namespace occa {
 
       return (double) (ct.tv_sec + (1.0e-9 * ct.tv_nsec));
 #elif (OCCA_OS == OCCA_MACOS_OS)
-#  if MAC_OS_X_VERSION_MIN_REQUIRED >= 101200
+#  if defined __clang__ && defined CLOCK_UPTIME_RAW
       uint64_t nanoseconds = clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 
       return 1.0e-9 * nanoseconds;
@@ -402,17 +401,11 @@ namespace occa {
 
     int getTID() {
 #if (OCCA_OS & (OCCA_LINUX_OS | OCCA_MACOS_OS))
-#if (OCCA_OS == OCCA_MACOS_OS)
-      // pthread_threadid_np is hidden for ppc in Libc of 10.6.8
-      #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060 && !defined(__ppc__)
-            uint64_t tid64;
-            pthread_threadid_np(nullptr, &tid64);
-            pid_t tid = (pid_t)tid64;
-      #else
-            uint64_t tid;
-            tid = pthread_mach_thread_np(pthread_self());
-      #endif
-#else // Linux
+#if OCCA_OS == OCCA_MACOS_OS & (MAC_OS_X_VERSION_MAX_ALLOWED >= 101200)
+      uint64_t tid64;
+      pthread_threadid_np(NULL, &tid64);
+      pid_t tid = (pid_t)tid64;
+#else
       pid_t tid = syscall(SYS_gettid);
 #endif
       return tid;

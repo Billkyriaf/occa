@@ -32,7 +32,7 @@ option(OCCA_ENABLE_CUDA   "Build with CUDA if available"   ON)
 option(OCCA_ENABLE_OPENCL "Build with OpenCL if available" ON)
 option(OCCA_ENABLE_HIP    "Build with HIP if available" ON)
 option(OCCA_ENABLE_METAL  "Build with Metal if available" ON)
-option(OCCA_ENABLE_DPCPP  "Build with SYCL/DPCPP if available" ON)
+option(OCCA_ENABLE_DPCPP "Build with SYCL/DPCPP if available" ON)
 option(OCCA_ENABLE_XRT    "Build with AMD XRT if available" ON)
 
 option(OCCA_ENABLE_TESTS    "Build tests"               OFF)
@@ -146,7 +146,7 @@ if(OCCA_ENABLE_CUDA)
     message("-- CUDA driver library: ${CUDAToolkit_LIBRARY_DIR}")
 
     # Use the provided imported target CUDA::cuda_driver, to make our package relocatable
-	target_link_libraries(libocca PUBLIC CUDA::cuda_driver)
+    target_link_libraries(libocca PRIVATE CUDA::cuda_driver)
   else()
     set(OCCA_CUDA_ENABLED 0)
   endif()

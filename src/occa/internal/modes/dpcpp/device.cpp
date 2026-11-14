@@ -75,14 +75,9 @@ namespace occa
       return new stream(this, props, q);
     }
 
-    // Uses a oneAPI extension to enqueue a barrier.
-    // When ombined with in-order queues, this provides
-    // the execution required for `streamTag`s.
     occa::streamTag device::tagStream()
     {
-      ::sycl::queue& dpcpp_queue = getDpcppStream(currentStream).commandQueue;
-      ::sycl::event dpcpp_event = dpcpp_queue.ext_oneapi_submit_barrier();
-      return new occa::dpcpp::streamTag(this, dpcpp_event);
+      return getDpcppStream(currentStream).tag();
     }
 
     void device::waitFor(occa::streamTag tag)
@@ -96,10 +91,9 @@ namespace occa
       auto& dpcppStartTag{getDpcppStreamTag(startTag)};
       auto& dpcppEndTag{getDpcppStreamTag(endTag)};
 
-      dpcppStartTag.waitFor();
       dpcppEndTag.waitFor();
 
-      return (dpcppEndTag.endTime() - dpcppStartTag.endTime());
+      return (dpcppEndTag.startTime() - dpcppStartTag.endTime());
     }
 
 
@@ -123,6 +117,9 @@ namespace occa
                     binaryFilename,
                     kernelProps);
 
+      const bool compile_only = kernelProps.get("build/compile_only",false);
+      if (compile_only) return nullptr;
+      
       if (usingOkl)
       {
         return buildOKLKernelFromBinary(kernelHash,
@@ -148,7 +145,7 @@ namespace occa
       }
     }
 
-    void device::setArchCompilerFlags(occa::json &kernelProps)
+    void device::setArchCompilerFlags(std::string& compilerFlags)
     {
     }
 
@@ -161,14 +158,14 @@ namespace occa
       occa::json allProps = kernelProps;
       const bool verbose = allProps.get("verbose", false);
 
-      setArchCompilerFlags(allProps);
-
       const bool compilingOkl = allProps.get("okl/enabled", true);
 
       const std::string compiler = allProps["compiler"];
       std::string compilerFlags = allProps["compiler_flags"];
       std::string compilerSharedFlags = kernelProps["compiler_shared_flags"];
       std::string compilerLinkerFlags = kernelProps["compiler_linker_flags"];
+
+      setArchCompilerFlags(compilerFlags);
 
       if (!compilingOkl)
       {
@@ -250,7 +247,8 @@ namespace occa
       k.launcherKernel = buildLauncherKernel(kernelHash,
                                              hashDir,
                                              kernelName,
-                                             launcherMetadata);
+                                             launcherMetadata,
+                                             kernelProps);
       // Find device kernels
       orderedKernelMetadata launchedKernelsMetadata = getLaunchedKernelsMetadata(
           kernelName,
