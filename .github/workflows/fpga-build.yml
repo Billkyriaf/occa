@@ -1,0 +1,138 @@
+name: FPGA Build
+
+on:
+  push:
+    tags:
+      - 'fpga-build-*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: OCCA XRT Build
+    runs-on: [self-hosted, fpga-builder]
+    timeout-minutes: 60
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      XILINX_XRT: /opt/xilinx/xrt
+      BUILD_ROOT: /builds/occa
+
+    steps:
+      - name: Checkout OCCA
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify environment
+        run: |
+          set -euo pipefail
+
+          source /mnt/data2/Vivado2022.2.sh
+
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Tag: $GITHUB_REF_NAME"
+          echo "Commit: $GITHUB_SHA"
+
+          gcc --version
+          g++ --version
+          cmake --version
+          v++ --version
+
+          test -d "$XILINX_XRT/include"
+          test -f "$XILINX_XRT/lib/libxrt_coreutil.so"
+
+      - name: Configure OCCA
+        run: |
+          set -euo pipefail
+
+          source /mnt/data2/Vivado2022.2.sh
+
+          export LD_LIBRARY_PATH="$XILINX_XRT/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+          BUILD_DIR="$BUILD_ROOT/$GITHUB_REF_NAME"
+
+          mkdir -p "$BUILD_DIR"
+
+          cmake -S "$GITHUB_WORKSPACE" \
+                -B "$BUILD_DIR/build" \
+                -G "Unix Makefiles" \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_C_COMPILER=/usr/bin/gcc \
+                -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
+                -DCMAKE_INSTALL_PREFIX="$BUILD_DIR/install" \
+                -DOCCA_ENABLE_XRT=ON \
+                -DXRT_INCLUDE_DIR="$XILINX_XRT/include" \
+                -DXRT_COREUTIL_LIBRARY="$XILINX_XRT/lib/libxrt_coreutil.so" \
+                -DOCCA_ENABLE_OPENMP=OFF \
+                -DOCCA_ENABLE_OPENCL=OFF \
+                -DOCCA_ENABLE_CUDA=OFF \
+                -DOCCA_ENABLE_HIP=OFF \
+                -DOCCA_ENABLE_DPCPP=OFF \
+                -DOCCA_ENABLE_METAL=OFF \
+                -DOCCA_ENABLE_FORTRAN=OFF \
+                -DOCCA_ENABLE_TESTS=OFF \
+                -DOCCA_ENABLE_EXAMPLES=OFF
+
+      - name: Verify XRT backend enabled
+        run: |
+          set -euo pipefail
+
+          BUILD_DIR="$BUILD_ROOT/$GITHUB_REF_NAME"
+
+          grep -Eq \
+            '^#define OCCA_XRT_ENABLED[[:space:]]+1$' \
+            "$BUILD_DIR/build/include/occa/defines/compiledDefines.hpp"
+
+          echo "XRT backend enabled successfully"
+
+      - name: Build OCCA
+        run: |
+          set -euo pipefail
+
+          source /mnt/data2/Vivado2022.2.sh
+
+          export LD_LIBRARY_PATH="$XILINX_XRT/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+          BUILD_DIR="$BUILD_ROOT/$GITHUB_REF_NAME"
+
+          cmake --build "$BUILD_DIR/build" --parallel 8
+
+      - name: Install OCCA
+        run: |
+          set -euo pipefail
+
+          source /mnt/data2/Vivado2022.2.sh
+
+          export LD_LIBRARY_PATH="$XILINX_XRT/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+          BUILD_DIR="$BUILD_ROOT/$GITHUB_REF_NAME"
+
+          cmake --install "$BUILD_DIR/build"
+
+      - name: Save build metadata
+        run: |
+          set -euo pipefail
+
+          BUILD_DIR="$BUILD_ROOT/$GITHUB_REF_NAME"
+
+          {
+            echo "Repository: $GITHUB_REPOSITORY"
+            echo "Tag: $GITHUB_REF_NAME"
+            echo "Commit: $GITHUB_SHA"
+            echo "Build date: $(date -u --iso-8601=seconds)"
+            echo "Runner: $RUNNER_NAME"
+            echo "XRT: $XILINX_XRT"
+          } > "$BUILD_DIR/build-info.txt"
+
+      - name: Show build results
+        run: |
+          BUILD_DIR="$BUILD_ROOT/$GITHUB_REF_NAME"
+
+          echo "Build directory: $BUILD_DIR"
+          du -sh "$BUILD_DIR"
+          ls -lah "$BUILD_DIR/install"
