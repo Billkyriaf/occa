@@ -115,6 +115,15 @@ namespace occa {
             return nullptr;
         }
 
+        void device::buildSource(const std::string& fileName, const hash_t hash, const occa::json& properties) {
+            // Building kernels from source will not be supported because it takes 3 hours for 
+            // place and route for each one
+            OCCA_FORCE_ERROR(
+                "XRT source compilation is not supported; "
+                "use buildKernelFromBinary() with an .xclbin"
+            );
+        }
+
         modeKernel_t* device::buildKernelFromBinary(const std::string &filename, const std::string &kernelName, const occa::json&props) {
 #if OCCA_XRT_ENABLED
             // load the xclbin file from the filesystem

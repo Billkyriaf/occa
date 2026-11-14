@@ -86,6 +86,12 @@ namespace occa {
 				const occa::json &props
 			) override;
 
+			void buildSource(
+				const std::string& fileName, 
+                const hash_t hash, 
+                const occa::json& properties
+			) override;
+
 			modeKernel_t* buildKernelFromBinary(
 				const std::string &filename,
 				const std::string &kernelName,
